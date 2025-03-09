@@ -1,4 +1,6 @@
+
 # Load Libraries
+
 library(ggplot2)
 library(dplyr)
 library(lubridate)
@@ -8,7 +10,7 @@ library(readr)
 library(reshape2)
 
 # Load Dataset
-df <- read.csv("Supermart Grocery Sales - Retail Analytics Dataset.csv", stringsAsFactors = TRUE)
+df <- read.csv("C:/Users/ishit/Downloads/supermarket datatset unified/Supermart Grocery Sales - Retail Analytics Dataset.csv", stringsAsFactors = TRUE)
 
 # Data Preprocessing
 df <- na.omit(df)
@@ -36,11 +38,23 @@ ggplot(df, aes(x=factor(Category), y=Sales)) +
   xlab('Category') +
   ylab('Sales')
 
-# Sales Over Time
-sales_over_time <- df %>% group_by(Order.Date) %>% summarise(Total.Sales = sum(Sales))
-ggplot(sales_over_time, aes(x=Order.Date, y=Total.Sales)) + 
-  geom_line(color='blue') + 
-  ggtitle('Total Sales Over Time')
+# Ensure Order.Date is in Date format
+df$Order.Date <- as.Date(df$Order.Date)
+
+# Filter out NA values and summarize profit
+profit_over_time <- df %>%
+  filter(!is.na(Profit)) %>%  # Remove NA values
+  group_by(Order.Date) %>%
+  summarise(Total.Profit = sum(Profit, na.rm = TRUE))
+
+# Plot the profit data as a bar plot
+ggplot(profit_over_time, aes(x = Order.Date, y = Total.Profit)) + 
+  geom_bar(stat = 'identity', fill = 'green') +  # Use bar plot with filled color
+  ggtitle('Total Profit Over Time') +
+  ylab('Total Profit') + 
+  xlab('Order Date') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better visibility
+
 
 # Correlation Matrix
 cor_matrix <- cor(df %>% select_if(is.numeric))
@@ -68,8 +82,9 @@ pie(region_sales$Total, labels=region_sales$Region, main="Sales Distribution by 
 # Feature Selection and Model Building
 features <- df %>% select(-c(Order.ID, Customer.Name, Order.Date, Sales))
 target <- df$Sales
+target
 
-# Split the Dataset
+#split the dataset
 set.seed(42)
 train_index <- createDataPartition(target, p=0.8, list=FALSE)
 X_train <- features[train_index, ]
@@ -86,11 +101,19 @@ X_test <- predict(preprocess_params, X_test)
 model <- train(X_train, y_train, method='lm')
 y_pred <- predict(model, X_test)
 
+# Check for NA values in predictions and actuals
+if (any(is.na(y_test)) || any(is.na(y_pred))) {
+  stop("NA values found in predictions or actuals.")
+}
+
 # Evaluate the Model
-mse <- mean((y_test - y_pred)^2)
-r2 <- cor(y_test, y_pred)^2
+mse <- mean((y_test - y_pred)^2, na.rm = TRUE)  # Ensure NA removal
+r2 <- cor(y_test, y_pred, use = "complete.obs")^2  # Use complete cases for correlation
+
+# Print results
 print(paste('Mean Squared Error:', mse))
 print(paste('R-squared:', r2))
+
 
 # Actual vs Predicted Plot
 ggplot(data.frame(Actual=y_test, Predicted=y_pred), aes(x=Actual, y=Predicted)) +
