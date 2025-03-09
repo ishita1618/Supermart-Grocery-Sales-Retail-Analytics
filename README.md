@@ -7,6 +7,6 @@ Supermarket managers and business analysts will benefit from the study's conclus
 PURPOSE - The complete data analysis process will be covered in this paper, including exploratory analysis, machine learning modeling, performance evaluation, and data preprocessing. The objective is to show how data analytics can turn unstructured sales data into insightful knowledge that helps the retail industry.
 
 Language - R programming 
-Tools - SQL, Microsoft Excel
+Tools -  Microsoft Excel , Data Cleaning and Filtering , Data Visualization
 
 
